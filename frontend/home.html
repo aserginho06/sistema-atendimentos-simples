@@ -14,10 +14,17 @@
     <button onclick="logout()">Sair</button>
   </div>
 
-  <script>
-    function logout() {
-      window.location.href = "login.html";
-    }
-  </script>
+ <script>
+  // 🔒 PROTEÇÃO DA HOME
+  if (sessionStorage.getItem("logado") !== "true") {
+    window.location.href = "login.html";
+  }
+
+  function logout() {
+    sessionStorage.removeItem("logado");
+    window.location.href = "login.html";
+  }
+</script>
+
 </body>
 </html>

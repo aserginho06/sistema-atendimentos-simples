@@ -21,9 +21,9 @@ const data = await response.json();
 if (response.ok) {
   mensagem.style.color = "green";
   mensagem.innerText = data.message;
-  const botao = form.querySelector("button");
-botao.disabled = true;
 
+  // 🔐 MARCA COMO LOGADO
+  sessionStorage.setItem("logado", "true");
 
   setTimeout(() => {
     window.location.href = "home.html";
