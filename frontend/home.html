@@ -1,90 +1,142 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Home | Sistema de Atendimentos</title>
-  <link rel="stylesheet" href="css/style.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home | Sistema de Atendimentos</title>
+    <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="login-container">
-    <h2>Bem-vindo ao sistema</h2>
-    <h3>Atendimentos</h3>
-    <h3>Novo Atendimento</h3>
-    <form id="form-atendimento">
-        <input 
-        type="text"
-        id="titulo"
-        placeholder="Título do atendimento"
-        required
-        />
-        <textarea
-        id="descricao"
-        placeholder="Descrição do atendimento"
-        required></textarea>
-        <button type="submit">Cadastrar</button>
-        <p id="msg-form"></p>
-    </form>
-    <div id="lista-atendimentos">
-        <p>Carregando atendimentos...</p>
+    <div class="login-container">
+        <h2>Bem-vindo ao sistema</h2>
+        <h3>Atendimentos</h3>
+        <h3>Novo Atendimento</h3>
+        <form id="form-atendimento">
+            <input 
+                type="text"
+                id="titulo"
+                placeholder="Título do atendimento"
+                required
+            />
+            <textarea
+                id="descricao"
+                placeholder="Descrição do atendimento"
+                required></textarea>
+            <button type="submit">Cadastrar</button>
+            <p id="msg-form"></p>
+        </form>
+        <div id="lista-atendimentos">
+            <p>Carregando atendimentos...</p>
+        </div>
+        <p>Login realizado com sucesso.</p>
+        <button onclick="logout()">Sair</button>
     </div>
-    <p>Login realizado com sucesso.</p>
 
-    <button onclick="logout()">Sair</button>
-  </div>
-
- <script>
-  // 🔒 PROTEÇÃO DA HOME
-  if (sessionStorage.getItem("logado") !== "true") {
-    window.location.href = "login.html";
-  }
-
-  function logout() {
-    sessionStorage.removeItem("logado");
-    window.location.href = "login.html";
-  }
-
-  //Buscar atendimentos
-  async function carregarAtendimentos() {
-    const lista = document.getElementById("lista-atendimentos");
-    try {
-        const response = await fetch("http://localhost:3000/api/atendimentos");
-        const atendimentos = await response.json();
-
-        if (atendimentos.length === 0) {
-            lista.innerHTML = "<p>Nenhum atendimento registrado.</p>";
-            return;
+    <script>
+        // 🔒 PROTEÇÃO DA HOME
+        if (sessionStorage.getItem("logado") !== "true") {
+            window.location.href = "login.html";
         }
 
-        lista.innerHTML = "";
-        
-        atendimentos.forEach(at => {
-            const item = document.createElement("div");
-            item.style.border = "1px solid #ccc"
-            item.style.padding = "10px";
-            item.style.marginBottom = "10px";
-            item.style.borderRadius = "6px";
+        function logout() {
+            sessionStorage.removeItem("logado");
+            window.location.href = "login.html";
+        }
 
-            item.innerHTML = `
-            <strong>${at.titulo}</strong><br>
-            <small>Status: ${at.status}</small><br>
-            <small>Data ${new Date(at.data).toLocaleString()}</small>
-            <p>${at.descricao}</p>
-            `;
-            lista.appendChild(item);
+        // Buscar atendimentos
+        async function carregarAtendimentos() {
+            const lista = document.getElementById("lista-atendimentos");
+            try {
+                const response = await fetch("http://localhost:3000/api/atendimentos");
+                const atendimentos = await response.json();
+
+                if (atendimentos.length === 0) {
+                    lista.innerHTML = "<p>Nenhum atendimento registrado.</p>";
+                    return;
+                }
+
+                lista.innerHTML = "";
+                
+                atendimentos.forEach(at => {
+                    const item = document.createElement("div");
+                    item.style.border = "1px solid #ccc";
+                    item.style.padding = "10px";
+                    item.style.marginBottom = "10px";
+                    item.style.borderRadius = "6px";
+
+                    item.innerHTML = `
+                        <strong>${at.titulo}</strong><br>
+                        <small>Status: ${at.status}</small><br>
+                        <small>Data: ${new Date(at.data).toLocaleString()}</small>
+                        <p>${at.descricao}</p>
+                        <button onclick="editarAtendimento(${at.id}, '${at.titulo}', '${at.descricao}')">Editar</button>
+                        <button onclick="excluirAtendimento(${at.id})">Excluir</button>
+                    `;
+                    lista.appendChild(item);
+                });
+            } catch (error) {
+                lista.innerHTML = "<p>Erro ao carregar atendimentos</p>";
+                console.error(error);
+            }
+        }
+
+        carregarAtendimentos();
+
+        const form = document.getElementById("form-atendimento");
+        const msgForm = document.getElementById("msg-form");
+
+// === EDITAR ATENDIMENTO ===
+async function editarAtendimento(id, tituloAtual, descricaoAtual) {
+    const novoTitulo = prompt("Novo título:", tituloAtual);
+    const novaDescricao = prompt("Nova descrição:", descricaoAtual);
+
+    if (!novoTitulo || !novaDescricao) return;
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/atendimentos/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                titulo: novoTitulo,
+                descricao: novaDescricao
+            })
         });
+
+        if (response.ok) {
+            carregarAtendimentos();
+        } else {
+            alert("Erro ao editar atendimento");
+        }
     } catch (error) {
-        lista.innerHTML = "<p>Erro ao carregar atendimentos</p>";
+        alert("Erro ao conectar com o servidor");
         console.error(error);
     }
-  }
+}
 
-  carregarAtendimentos();
+// === EXCLUIR ATENDIMENTO ===
+async function excluirAtendimento(id) {
+    const confirmar = confirm("Deseja excluir este atendimento?");
+    if (!confirmar) return;
 
-  const form =document.getElementById("form-atendimento");
-  const msgForm = document.getElementById("msg-form");
+    try {
+        const response = await fetch(`http://localhost:3000/api/atendimentos/${id}`, {
+            method: "DELETE"
+        });
 
-  form.addEventListener("submit", async (e) =>{
+        if (response.ok) {
+            carregarAtendimentos();
+        } else {
+            alert("Erro ao excluir atendimento");
+        }
+    } catch (error) {
+        alert("Erro ao conectar com o servidor");
+        console.error(error);
+    }
+}
+
+form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const titulo = document.getElementById("titulo").value;
@@ -95,20 +147,20 @@
 
     try {
         const response = await fetch("http://localhost:3000/api/atendimentos", {
-            method:"POST",
+            method: "POST",
             headers: {
-                "Content-type": "application/json"
+                "Content-Type": "application/json"
             },
-            body: JSON.stringify({ titulo, descricao})
+            body: JSON.stringify({ titulo, descricao })
         });
+
         const data = await response.json();
 
-        if(response.ok) {
+        if (response.ok) {
             msgForm.style.color = "green";
             msgForm.innerText = "Atendimento cadastrado com sucesso!";
-
-            //limpa formulario
             form.reset();
+            carregarAtendimentos();
         } else {
             msgForm.style.color = "red";
             msgForm.innerText = data.message;
@@ -116,9 +168,9 @@
     } catch (error) {
         msgForm.style.color = "red";
         msgForm.innerText = "Erro ao conectar com o servidor";
+        console.error(error);
     }
-  });
+});
 </script>
-
 </body>
 </html>
