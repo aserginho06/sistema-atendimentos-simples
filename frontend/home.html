@@ -10,6 +10,21 @@
   <div class="login-container">
     <h2>Bem-vindo ao sistema</h2>
     <h3>Atendimentos</h3>
+    <h3>Novo Atendimento</h3>
+    <form id="form-atendimento">
+        <input 
+        type="text"
+        id="titulo"
+        placeholder="Título do atendimento"
+        required
+        />
+        <textarea
+        id="descricao"
+        placeholder="Descrição do atendimento"
+        required></textarea>
+        <button type="submit">Cadastrar</button>
+        <p id="msg-form"></p>
+    </form>
     <div id="lista-atendimentos">
         <p>Carregando atendimentos...</p>
     </div>
@@ -65,6 +80,44 @@
   }
 
   carregarAtendimentos();
+
+  const form =document.getElementById("form-atendimento");
+  const msgForm = document.getElementById("msg-form");
+
+  form.addEventListener("submit", async (e) =>{
+    e.preventDefault();
+
+    const titulo = document.getElementById("titulo").value;
+    const descricao = document.getElementById("descricao").value;
+
+    msgForm.innerText = "Enviando...";
+    msgForm.style.color = "black";
+
+    try {
+        const response = await fetch("http://localhost:3000/api/atendimentos", {
+            method:"POST",
+            headers: {
+                "Content-type": "application/json"
+            },
+            body: JSON.stringify({ titulo, descricao})
+        });
+        const data = await response.json();
+
+        if(response.ok) {
+            msgForm.style.color = "green";
+            msgForm.innerText = "Atendimento cadastrado com sucesso!";
+
+            //limpa formulario
+            form.reset();
+        } else {
+            msgForm.style.color = "red";
+            msgForm.innerText = data.message;
+        }
+    } catch (error) {
+        msgForm.style.color = "red";
+        msgForm.innerText = "Erro ao conectar com o servidor";
+    }
+  });
 </script>
 
 </body>
