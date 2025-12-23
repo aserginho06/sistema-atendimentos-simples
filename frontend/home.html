@@ -9,6 +9,10 @@
 <body>
   <div class="login-container">
     <h2>Bem-vindo ao sistema</h2>
+    <h3>Atendimentos</h3>
+    <div id="lista-atendimentos">
+        <p>Carregando atendimentos...</p>
+    </div>
     <p>Login realizado com sucesso.</p>
 
     <button onclick="logout()">Sair</button>
@@ -24,6 +28,43 @@
     sessionStorage.removeItem("logado");
     window.location.href = "login.html";
   }
+
+  //Buscar atendimentos
+  async function carregarAtendimentos() {
+    const lista = document.getElementById("lista-atendimentos");
+    try {
+        const response = await fetch("http://localhost:3000/api/atendimentos");
+        const atendimentos = await response.json();
+
+        if (atendimentos.length === 0) {
+            lista.innerHTML = "<p>Nenhum atendimento registrado.</p>";
+            return;
+        }
+
+        lista.innerHTML = "";
+        
+        atendimentos.forEach(at => {
+            const item = document.createElement("div");
+            item.style.border = "1px solid #ccc"
+            item.style.padding = "10px";
+            item.style.marginBottom = "10px";
+            item.style.borderRadius = "6px";
+
+            item.innerHTML = `
+            <strong>${at.titulo}</strong><br>
+            <small>Status: ${at.status}</small><br>
+            <small>Data ${new Date(at.data).toLocaleString()}</small>
+            <p>${at.descricao}</p>
+            `;
+            lista.appendChild(item);
+        });
+    } catch (error) {
+        lista.innerHTML = "<p>Erro ao carregar atendimentos</p>";
+        console.error(error);
+    }
+  }
+
+  carregarAtendimentos();
 </script>
 
 </body>
