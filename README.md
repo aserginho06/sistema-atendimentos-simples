@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 📘 README — Sistema Web de Atendimentos
 📌 Visão Geral
+=======
+# 📘 README — Sistema Web de Atendimentos
+
+## 📌 Visão Geral
+>>>>>>> 3a83ef1 (docs: adiciona README do projeto)
 
 Sistema Web simples para gerenciamento de atendimentos, com backend em Node.js e persistência em SQLite.
 O sistema permite criar, listar, editar e excluir atendimentos, seguindo arquitetura em camadas (rotas, controllers e models).
@@ -119,5 +125,4 @@ Programação para Internet
 possível evolução para TCC
 
 📄 Licença
-
 Projeto de uso educacional.
