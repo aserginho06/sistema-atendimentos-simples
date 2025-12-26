@@ -1,58 +1,75 @@
 const atendimentos = require("../models/atendimentos");
 
-function listar(req, res) {
-    res.json(atendimentos);
+async function listar(req, res) {
+    try{
+        const dados = await Atendimento.listar();
+        return res.status(200).json(dados);        
+    }catch (err) {
+        return res.status(500).json({ message: "Erro ao listar atendimentos"});
+    }
 }
 
-function criar(req, res) {
+async function criar(req, res) {
     const {titulo, descricao } = req.body;
 
     if (!titulo || !descricao) {
         return res.status(400).json({message:"Título e descrição são obrigatórios"})
     }
-    
-    const novoAtendimento  = {
-        id: atendimentos.length +1,
-        titulo,
-        descricao,
-        status:"aberto",
-        data: new Date()
-    };
 
-    atendimentos.push(novoAtendimento);
-
-    res.status(201).json(novoAtendimento);
+    try {
+        const novo = await Atendimento.criar ({titulo, descricao });
+        return res.status(201).json(novo);
+    }   catch (err) {
+        return res.status(500).json({message: "Erro ao criar atendimento"});
+    }
 }
 
-function excluir(req, res) {
-    const{ id } = req.params;
-    const index = atendimentos.findIndex(a => a.id === Number(id));
-
-    if (index === -1){
-        return res.status(404).json({ message:"Atendimento não encontrado"});
+async function excluir(req, res) {
+    const id = Number(req.params.id);
+    
+    if (isNaN(id)) {
+        return res.status(404).json({ message:"ID inválido"});
     }
     
-    atendimentos.splice(index, 1);
-    return res.status(204).send();
+    try {
+        const removido = await Atendimento.excluir(id);
+
+        if (!removido) {
+            return res.status(404).json({message: "Atendimento não encontrado"});
+        }
+        
+        return res.status(204).send();
+    }   catch(err) {
+        return res.status(500).json({ message: "Erro ao excluir atendimento"});
+    }
 }
 
-function editar(req, res) {
-    const{ id } = req.params;
+async function editar(req, res) {
+    const id = Number(req.params.id);
     const {titulo, descricao } = req.body;
     
-    const atendimento = atendimentos.find(a => a.id ===Number(id));
-    
-    if (!atendimento) {
-        return res.status(404).json({ message:"Atendimento não encontrado"});
+    if (isNaN(id)) {
+        return res.status(404).json({ message:"ID inválido"});
     }
-    if (!titulo || !descricao) {
-        return res.status(400).json({ message: "Título e descrição são obrigatórios"})
-    }
-    atendimento.titulo = titulo;
-    atendimento.descricao = descricao;
 
-    return res.json(atendimento);
+    if (!titulo || !descricao) {
+        return res.status(400).json({ message: "Título e descrição são obrigatórios"});
+    }
+
+    try {
+        const atualizado = await Atendimento.editar(id,{titulo, descricao});
+
+        if (!atualizado) {
+            return res.status(404).json({ message: "Atendimento não encontrado"});
+        }
+
+        return res.status(200).json(atualizado);
+    }   catch(err) {
+        return res.status(500).json({ message: "Erro aoadiantar atendimento"});
+    }
 }
+
+
 module.exports = {
     listar,
     criar,
