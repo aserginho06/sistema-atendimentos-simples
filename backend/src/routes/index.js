@@ -1,14 +1,11 @@
 const express = require("express");
 const router = express.Router();
 
-const authRoutes = require("./authRoutes");
 const atendimentoRoutes = require("./atendimentoRoutes");
+const authRoutes = require("./authRoutes");
 
-router.use("/auth", authRoutes);
 router.use("/atendimentos", atendimentoRoutes);
-
-router.get("/", (req, res) => {
-  res.json({ status: "API OK" });
-});
+router.use("/auth", authRoutes);
 
 module.exports = router;
+

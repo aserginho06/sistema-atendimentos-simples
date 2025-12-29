@@ -1,176 +1,222 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Home | Sistema de Atendimentos</title>
-    <link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Atendimentos</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-    <div class="login-container">
-        <h2>Bem-vindo ao sistema</h2>
-        <h3>Atendimentos</h3>
-        <h3>Novo Atendimento</h3>
-        <form id="form-atendimento">
-            <input 
-                type="text"
-                id="titulo"
-                placeholder="Título do atendimento"
-                required
-            />
-            <textarea
-                id="descricao"
-                placeholder="Descrição do atendimento"
-                required></textarea>
-            <button type="submit">Cadastrar</button>
-            <p id="msg-form"></p>
-        </form>
-        <div id="lista-atendimentos">
-            <p>Carregando atendimentos...</p>
-        </div>
-        <p>Login realizado com sucesso.</p>
-        <button onclick="logout()">Sair</button>
+
+<div class="app-container">
+  <h2>Bem-vindo ao sistema</h2>
+
+  <h3>Novo Atendimento</h3>
+  <form id="form-atendimento" autocomplete="off">
+    <input
+      type="text"
+      id="titulo"
+      placeholder="Título do atendimento"
+      required
+    />
+    <textarea
+      id="descricao"
+      placeholder="Descrição do atendimento"
+      required></textarea>
+
+    <button type="submit">Cadastrar</button>
+    <p id="msg-form"></p>
+  </form>
+
+  <h3>Atendimentos</h3>
+  <div id="lista-atendimentos">
+    <p>Carregando atendimentos...</p>
+  </div>
+
+  <button type="button" onclick="logout()">Sair</button>
+</div>
+
+<div id="modal-editar" class="modal hidden">
+  <div class="modal-content">
+    <h3>Editar Atendimento</h3>
+
+    <input type="text" id="edit-titulo" placeholder="Título do atendimento" />
+    <textarea id="edit-descricao" placeholder="Descrição do atendimento"></textarea>
+
+    <div class="modal-acoes">
+      <button onclick="fecharModal()">Cancelar</button>
+      <button onclick="salvarEdicao()">Salvar</button>
     </div>
+  </div>
+</div>
 
-    <script>
-        // 🔒 PROTEÇÃO DA HOME
-        if (sessionStorage.getItem("logado") !== "true") {
-            window.location.href = "login.html";
-        }
 
-        function logout() {
-            sessionStorage.removeItem("logado");
-            window.location.href = "login.html";
-        }
+<script>
+let atendimentoEditando = null;
 
-        // Buscar atendimentos
-        async function carregarAtendimentos() {
-            const lista = document.getElementById("lista-atendimentos");
-            try {
-                const response = await fetch("http://localhost:3000/api/atendimentos");
-                const atendimentos = await response.json();
-
-                if (atendimentos.length === 0) {
-                    lista.innerHTML = "<p>Nenhum atendimento registrado.</p>";
-                    return;
-                }
-
-                lista.innerHTML = "";
-                
-                atendimentos.forEach(at => {
-                    const item = document.createElement("div");
-                    item.style.border = "1px solid #ccc";
-                    item.style.padding = "10px";
-                    item.style.marginBottom = "10px";
-                    item.style.borderRadius = "6px";
-
-                    item.innerHTML = `
-                        <strong>${at.titulo}</strong><br>
-                        <small>Status: ${at.status}</small><br>
-                        <small>Data: ${new Date(at.data).toLocaleString()}</small>
-                        <p>${at.descricao}</p>
-                        <button onclick="editarAtendimento(${at.id}, '${at.titulo}', '${at.descricao}')">Editar</button>
-                        <button onclick="excluirAtendimento(${at.id})">Excluir</button>
-                    `;
-                    lista.appendChild(item);
-                });
-            } catch (error) {
-                lista.innerHTML = "<p>Erro ao carregar atendimentos</p>";
-                console.error(error);
-            }
-        }
-
-        carregarAtendimentos();
-
-        const form = document.getElementById("form-atendimento");
-        const msgForm = document.getElementById("msg-form");
-
-// === EDITAR ATENDIMENTO ===
-async function editarAtendimento(id, tituloAtual, descricaoAtual) {
-    const novoTitulo = prompt("Novo título:", tituloAtual);
-    const novaDescricao = prompt("Nova descrição:", descricaoAtual);
-
-    if (!novoTitulo || !novaDescricao) return;
-
-    try {
-        const response = await fetch(`http://localhost:3000/api/atendimentos/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                titulo: novoTitulo,
-                descricao: novaDescricao
-            })
-        });
-
-        if (response.ok) {
-            carregarAtendimentos();
-        } else {
-            alert("Erro ao editar atendimento");
-        }
-    } catch (error) {
-        alert("Erro ao conectar com o servidor");
-        console.error(error);
-    }
+/* ===== PROTEÇÃO ===== */
+if (sessionStorage.getItem("logado") !== "true") {
+  window.location.href = "login.html";
 }
 
-// === EXCLUIR ATENDIMENTO ===
-async function excluirAtendimento(id) {
-    const confirmar = confirm("Deseja excluir este atendimento?");
-    if (!confirmar) return;
-
-    try {
-        const response = await fetch(`http://localhost:3000/api/atendimentos/${id}`, {
-            method: "DELETE"
-        });
-
-        if (response.ok) {
-            carregarAtendimentos();
-        } else {
-            alert("Erro ao excluir atendimento");
-        }
-    } catch (error) {
-        alert("Erro ao conectar com o servidor");
-        console.error(error);
-    }
+function logout() {
+  sessionStorage.clear();
+  window.location.href = "login.html";
 }
 
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+const usuarioId = sessionStorage.getItem("usuario_id");
+let cacheAtendimentos = [];
 
-    const titulo = document.getElementById("titulo").value;
-    const descricao = document.getElementById("descricao").value;
+/* ===== LISTAR ===== */
+async function carregarAtendimentos() {
+  const lista = document.getElementById("lista-atendimentos");
 
-    msgForm.innerText = "Enviando...";
-    msgForm.style.color = "black";
-
-    try {
-        const response = await fetch("http://localhost:3000/api/atendimentos", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ titulo, descricao })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            msgForm.style.color = "green";
-            msgForm.innerText = "Atendimento cadastrado com sucesso!";
-            form.reset();
-            carregarAtendimentos();
-        } else {
-            msgForm.style.color = "red";
-            msgForm.innerText = data.message;
-        }
-    } catch (error) {
-        msgForm.style.color = "red";
-        msgForm.innerText = "Erro ao conectar com o servidor";
-        console.error(error);
-    }
+  try {
+    const response = await fetch("http://localhost:3000/api/atendimentos", {
+  headers: {
+    "x-user-id": sessionStorage.getItem("usuario_id")
+  }
 });
+
+
+    const atendimentos = await response.json();
+    cacheAtendimentos = atendimentos;
+
+    if (!Array.isArray(atendimentos) || atendimentos.length === 0) {
+      lista.innerHTML = "<p>Nenhum atendimento registrado.</p>";
+      return;
+    }
+
+    lista.innerHTML = "";
+
+    atendimentos.forEach(at => {
+  const item = document.createElement("div");
+  item.classList.add("atendimento");
+
+  const dataFormatada = at.criado_em
+    ? new Date(at.criado_em.replace(" ", "T")).toLocaleString("pt-BR")
+    : "Sem data";
+
+  item.innerHTML = `
+    <h4>${at.titulo}</h4>
+
+    <span class="status ${at.status}">
+      ${at.status}
+    </span>
+
+    <p class="data">${dataFormatada}</p>
+    <p class="descricao">${at.descricao}</p>
+
+    <div class="acoes">
+      <button onclick="editarAtendimento(${at.id})">Editar</button>
+      <button class="btn-danger" onclick="excluirAtendimento(${at.id})">Excluir</button>
+    </div>
+  `;
+
+  // 🔥 ISSO AQUI É O QUE FALTAVA
+  lista.appendChild(item);
+});
+
+
+  } catch (err) {
+    lista.innerHTML = "<p>Erro ao carregar atendimentos</p>";
+    console.error(err);
+  }
+}
+
+carregarAtendimentos();
+
+/* ===== CRIAR ===== */
+document.getElementById("form-atendimento").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const titulo = document.getElementById("titulo").value;
+  const descricao = document.getElementById("descricao").value;
+  const msg = document.getElementById("msg-form");
+
+  msg.innerText = "Enviando...";
+
+  try {
+    const response = await fetch("http://localhost:3000/api/atendimentos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": usuarioId
+      },
+      body: JSON.stringify({ titulo, descricao })
+    });
+
+    if (!response.ok) throw new Error();
+
+    msg.innerText = "Atendimento cadastrado com sucesso!";
+    msg.style.color = "green";
+    e.target.reset();
+    carregarAtendimentos();
+
+  } catch {
+    msg.innerText = "Erro ao cadastrar atendimento";
+    msg.style.color = "red";
+  }
+});
+
+/* ===== EXCLUIR ===== */
+async function excluirAtendimento(id) {
+  if (!confirm("Deseja excluir este atendimento?")) return;
+
+  const res = await fetch(`http://localhost:3000/api/atendimentos/${id}`, {
+    method: "DELETE",
+    headers: {
+      "x-user-id": usuarioId
+    }
+  });
+
+  if (res.ok) carregarAtendimentos();
+  else alert("Sem permissão para excluir");
+}
+function editarAtendimento(id) {
+  const atual = cacheAtendimentos.find(a => a.id === id);
+  if (!atual) return;
+
+  atendimentoEditando = atual;
+
+  document.getElementById("edit-titulo").value = atual.titulo;
+  document.getElementById("edit-descricao").value = atual.descricao;
+
+  document.getElementById("modal-editar").classList.remove("hidden");
+}
+//fechar modal
+function fecharModal() {
+  atendimentoEditando = null;
+  document.getElementById("modal-editar").classList.add("hidden");
+}
+//salvar edição
+async function salvarEdicao() {
+  if (!atendimentoEditando) return;
+
+  const titulo = document.getElementById("edit-titulo").value;
+  const descricao = document.getElementById("edit-descricao").value;
+
+  const res = await fetch(
+    `http://localhost:3000/api/atendimentos/${atendimentoEditando.id}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-User-Id": sessionStorage.getItem("usuario_id")
+      },
+      body: JSON.stringify({ titulo, descricao })
+    }
+  );
+
+  if (res.ok) {
+    fecharModal();
+    carregarAtendimentos();
+  } else {
+    alert("Erro ao editar");
+  }
+}
+
 </script>
+
 </body>
 </html>

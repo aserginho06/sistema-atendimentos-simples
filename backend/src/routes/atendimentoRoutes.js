@@ -1,10 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const { listar, criar, excluir,editar } = require("../controllers/atendimentoController");
+const auth = require("../middlewares/auth");
+const controller = require("../controllers/atendimentoController");
 
-router.get("/", listar);
-router.post("/", criar);
-router.delete("/:id",excluir);
-router.put("/:id", editar);
+router.use(auth); // 👈 IMPORTANTE
+
+router.get("/", controller.listar);
+router.post("/", controller.criar);
+router.put("/:id", controller.editar);
+router.delete("/:id", controller.excluir);
 
 module.exports = router;

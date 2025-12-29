@@ -24,6 +24,7 @@ if (response.ok) {
 
   // 🔐 MARCA COMO LOGADO
   sessionStorage.setItem("logado", "true");
+  sessionStorage.setItem("usuario_id", data.usuario_id);
 
   setTimeout(() => {
     window.location.href = "home.html";
